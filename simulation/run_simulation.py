@@ -1,9 +1,11 @@
-import datetime
-
 import numpy as np
 import json
 import sys
+import pandas as pd
+import os
+import datetime
 
+from matplotlib import pyplot as plt
 from main.Simulation import SimulationReturnType
 from optimization.bayesian import BayesianOptimization
 from optimization.random import RandomOptimization
@@ -22,7 +24,9 @@ class SimulationSettings:
     This class stores settings that will be used by the simulation.
 
     """
-    def __init__(self, race_type="ASC", golang=True, return_type=SimulationReturnType.time_taken, optimization_iterations=5, route_visualization=False, verbose=False, granularity=1):
+
+    def __init__(self, race_type="ASC", golang=True, return_type=SimulationReturnType.time_taken,
+                 optimization_iterations=5, route_visualization=False, verbose=False, granularity=1):
         self.race_type = race_type
         self.optimization_iterations = optimization_iterations
         self.golang = golang
@@ -65,11 +69,11 @@ def run_simulation(settings):
         model_parameters = json.load(f)
 
     # Build simulation model
-    simulation_builder = SimulationBuilder()\
-        .set_initial_conditions(initial_conditions)\
-        .set_model_parameters(model_parameters, settings.race_type)\
-        .set_golang(settings.golang)\
-        .set_return_type(settings.return_type)\
+    simulation_builder = SimulationBuilder() \
+        .set_initial_conditions(initial_conditions) \
+        .set_model_parameters(model_parameters, settings.race_type) \
+        .set_golang(settings.golang) \
+        .set_return_type(settings.return_type) \
         .set_granularity(settings.granularity)
 
     simulation_model = simulation_builder.get()
@@ -312,11 +316,11 @@ def run_unoptimized_and_export(input_speed=None, values=None, race_type="ASC", g
         model_parameters = json.load(f)
 
     # Build simulation model
-    simulation_builder = SimulationBuilder()\
-        .set_initial_conditions(initial_conditions)\
-        .set_model_parameters(model_parameters, race_type)\
-        .set_golang(golang)\
-        .set_return_type(SimulationReturnType.void)\
+    simulation_builder = SimulationBuilder() \
+        .set_initial_conditions(initial_conditions) \
+        .set_model_parameters(model_parameters, race_type) \
+        .set_golang(golang) \
+        .set_return_type(SimulationReturnType.void) \
         .set_granularity(granularity)
 
     simulation_model = simulation_builder.get()
@@ -332,6 +336,105 @@ def run_unoptimized_and_export(input_speed=None, values=None, race_type="ASC", g
     results_array = simulation_model.get_results(values)
 
     return results_array
+
+
+def parse_data(data_name: str, save: bool = True):
+    # Load your CSV data into a DataFrame
+    cwd = os.getcwd()
+    data_path = os.path.join(cwd, f"data/{data_name}.csv")
+    df = pd.read_csv(data_path, header=3)
+
+    # Pivot the DataFrame to transform it into the desired format
+    pivot_df = df.pivot(index='_time', columns='_field', values='_value')
+
+    # Save the transformed data to a new CSV file
+    if save:
+        pivot_df.to_csv('transformed_data.csv')
+
+    return pivot_df
+
+
+def run_simulation_from_data():
+    # Get the data collected from Daybreak as a dataframe
+    data = parse_data('DAYBREAK_DATA', save=False)
+    data.reset_index(inplace=True)
+    times = data["_time"].to_numpy()
+    velocity_ms = np.nan_to_num(data["vehicle_velocity"].to_numpy())
+    velocity_kmh = np.abs(velocity_ms) * 3.6
+
+    begin: datetime.datetime = datetime.datetime.fromisoformat(times[0])
+    subsequent: datetime.datetime = datetime.datetime.fromisoformat(times[1])
+    end: datetime.datetime = datetime.datetime.fromisoformat(times[-1])
+
+    simulation_duration = int(end.timestamp()) - int(begin.timestamp())
+    seconds_per_datapoint = int(subsequent.timestamp()) - int(begin.timestamp())
+
+    print(f"Duration in seconds: {simulation_duration}")
+    print(f"Granularity: {seconds_per_datapoint}")
+
+    start_hour: int = begin.hour - 8  # subtraction is conversion from UTC to PST
+    initial_battery_charge: float = 1.0  # Arbitrary
+
+    # Acquired from placing pins on Google Maps
+    origin_coord = [49.26157652975386, -123.2459024292226]
+    current_coord = [49.26157652975386, -123.2459024292226]
+    dest_coord = [49.26153504243344, -123.24598507238346]
+    waypoints = [[49.261111869797844, -123.24558245177245], [49.26144238729593, -123.24620121606667]]
+
+    tick: int = 1
+    lvs_power_loss: float = 0.0  # Arbitrary
+
+    gis_force_update: bool = False
+    weather_force_update: bool = False
+
+    granularity: float = 3600 / seconds_per_datapoint
+
+    model_parameters = {
+        "origin_coord": origin_coord,
+        "dest_coord": dest_coord,
+        "waypoints": waypoints,
+        "lvs_power_loss": lvs_power_loss,
+        "tick": tick,
+        "simulation_duration": simulation_duration
+    }
+
+    initial_conditions = {
+        "current_coord": current_coord,
+        "start_hour": start_hour,
+        "initial_battery_charge": initial_battery_charge,
+        "gis_force_update": gis_force_update,
+        "weather_force_update": weather_force_update
+    }
+
+    builder = SimulationBuilder().set_granularity(granularity).set_golang(True).\
+        set_model_parameters(model_parameters, "FSGP").set_initial_conditions(initial_conditions).\
+        set_return_type(SimulationReturnType.void)
+    model = builder.get()
+
+    driving_indices = model.get_driving_time_divisions()
+
+    # We are missing about 7 minutes of data
+    padding_amount = driving_indices - len(velocity_kmh)
+
+    velocity_kmh_padded = np.append(velocity_kmh, np.zeros(padding_amount))
+
+    model.run_model(speed=velocity_kmh_padded, plot_results=False, verbose=False, route_visualization=False)
+
+    # Analysis
+    simulated_motor_consumed_energy = model.get_results(["motor_consumed_energy"])[0]
+    actual_motor_power = data["bus_current"].to_numpy() * data["bus_voltage"].to_numpy()
+    actual_motor_power = np.append(actual_motor_power, np.zeros(padding_amount))
+    actual_motor_consumed_energy = np.append(np.repeat(actual_motor_power, seconds_per_datapoint), 0)
+
+    timestamps = np.arange(0, len(actual_motor_consumed_energy))
+
+    plt.plot(timestamps, actual_motor_consumed_energy, label="Actual Energy")
+    plt.plot(timestamps, simulated_motor_consumed_energy, label="Simulated Energy")
+    plt.legend()
+    plt.show()
+    plt.savefig("Figure")
+
+    print("Success!")
 
 
 if __name__ == "__main__":
