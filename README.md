@@ -2,9 +2,9 @@
 
 [![Build Status](https://app.travis-ci.com/UBC-Solar/Simulation.svg?branch=master)](https://app.travis-ci.com/UBC-Solar/Simulation)
 
-Welcome to UBC Solar's race strategy simulation environment! The objectve of this simulation is to guide UBC Solar's race strategy by creating a model to predict the performance of the UBC Solar cars in the American Solar Challenge (ASC) and Formula Sun Grand Prix (FSGP). 
+Welcome to UBC Solar's race strategy simulation environment! The objective of this simulation is to guide UBC Solar's race strategy by creating a model to predict the performance of the UBC Solar cars in the American Solar Challenge (ASC) and Formula Sun Grand Prix (FSGP). 
 
-This document contains information on how to getting started with using the simulation framework. 
+This document contains information on how to get started with using the simulation framework. 
 
 For more detailed information on the inner workings of the simulation please refer to the [wiki](https://github.com/UBC-Solar/Simulation/wiki).
 
@@ -64,12 +64,12 @@ NOTE: Any Python version before 3.8 is not supported so please make sure that yo
 
 - If all the commands worked, you should then be able to import the simulation module in your Python (.py) scripts and use the simulation objects as shown below:
 
-    ```python
-    import simulation
+```python
+import simulation
 
-    # creates a battery object
-    battery = simulation.BasicBattery(0.90)
-    ```
+# creates a battery object
+battery = simulation.BasicBattery(0.90)
+```
 
 ### Run Simulation
 
