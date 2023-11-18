@@ -344,7 +344,8 @@ def get_default_settings(race_type: str = "ASC") -> tuple[dict, dict]:
     return initial_conditions, model_parameters
 
 
-def build_basic_model(race_type: str = "ASC", golang: bool = True, granularity: float = 1) -> Simulation:
+def build_basic_model(race_type: str = "ASC", golang: bool = True, granularity: float = 1) -> \
+        (Simulation, SimulationBuilder):
     initial_conditions, model_parameters = get_default_settings(race_type)
     simulation_builder = SimulationBuilder() \
         .set_initial_conditions(initial_conditions) \
@@ -352,7 +353,7 @@ def build_basic_model(race_type: str = "ASC", golang: bool = True, granularity: 
         .set_golang(golang) \
         .set_return_type(SimulationReturnType.void) \
         .set_granularity(granularity)
-    return simulation_builder.get()
+    return simulation_builder.get(), simulation_builder
 
 
 if __name__ == "__main__":
