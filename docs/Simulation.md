@@ -29,7 +29,9 @@ Then, we can calculate the power that the motor will require to achieve the requ
 Thus, we can determine the amount of energy that will be drawn or stored in the battery at every tick, which allows us to determine the state of charge of the battery for every tick.
 Finally, we check if our assumption was right, that we would have enough energy to achieve the speeds that we set out to achieve, and if we were correct then simulation is completed, and was successful.
 
-Table of Contents
+To learn about Simulation at a module-level, see the following documents:
+
+## Table of Contents
 - [Arrays](../simulation/arrays/module-info.md)
 - [Battery](../simulation/battery/module-info.md)
 - [Cache](../simulation/cache/module-info.md)
