@@ -153,3 +153,6 @@ data/images/*.png
 # idea
 .idea
 /simulation/examples/.env
+
+# macOS
+*.DS_Store
