@@ -10,4 +10,6 @@ continuity of information.
 It should be noted that unlike, the requirements for 
 packages used in the process of data analysis should not be contained 
 within the dependencies of `Simulation`. You may find it useful to activate or create
-a new virtual environment for the purposes of data analysis using `Simulation`.
+a new virtual environment for the purposes of data analysis using `Simulation`. Given the nature 
+of the work performed, Anaconda may be useful. In that case, an `environment.yml` file to describe
+the Anaconda environment used may be created and maintained within this directory.
