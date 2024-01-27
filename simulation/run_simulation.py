@@ -100,65 +100,15 @@ def run_simulation(settings):
                                                   route_visualization=settings.route_visualization)
 
     # Set up optimization models
-    maximum_speed = 60
+    maximum_speed = 80
     minimum_speed = 0
 
     bounds = InputBounds()
     bounds.add_bounds(driving_hours, minimum_speed, maximum_speed)
 
-    # Perform optimization with Genetic Optimization
-    optimization_settings: OptimizationSettings = OptimizationSettings()
-    with tqdm(total=optimization_settings.generation_limit, file=sys.stdout, desc="Optimizing driving speeds",
-              position=0, leave=True, unit="Generation", smoothing=1.0) as pbar:
-        geneticOptimization = GeneticOptimization(simulation_model, bounds, settings=optimization_settings, pbar=pbar)
-        results_genetic = geneticOptimization.maximize()
-    optimized_genetic = simulation_model.run_model(geneticOptimization.bestinput, plot_results=True)
-
-    # Initialize optimization methods
-    optimization = BayesianOptimization(bounds, simulation_model.run_model)
-    random_optimization = RandomOptimization(bounds, simulation_model.run_model)
-
-    # Perform optimization with Bayesian Optimization
-    results_bayesian = optimization.maximize(init_points=5, n_iter=settings.optimization_iterations, kappa=10)
-    optimized_bayesian = simulation_model.run_model(speed=np.fromiter(results_bayesian, dtype=float), plot_results=True,
-                                                    verbose=settings.verbose,
-                                                    route_visualization=settings.route_visualization)
-
-    # Perform optimization with random optimization
-    results_random = random_optimization.maximize(iterations=settings.optimization_iterations)
-    optimized_random = simulation_model.run_model(speed=np.fromiter(results_random, dtype=float), plot_results=True,
-                                                  verbose=settings.verbose,
-                                                  route_visualization=settings.route_visualization)
-
-    #  ----- Output results ----- #
-
-    display_output(settings.return_type, unoptimized_time, optimized_bayesian, optimized_random, results_bayesian,
-                   results_random)
+    run_hyperparameter_search(simulation_model, bounds)
 
     return unoptimized_time
-
-
-def display_output(return_type, unoptimized, optimized, optimized_random, results, results_random):
-    if return_type is SimulationReturnType.time_taken:
-        print(
-            f'TimeSimulation results. Time Taken: {-1 * unoptimized} seconds, '
-            f'({str(datetime.timedelta(seconds=int(-1 * unoptimized)))})')
-        print(
-            f'Optimized results. Time taken: {-1 * optimized} seconds, '
-            f'({str(datetime.timedelta(seconds=int(-1 * optimized)))})')
-        print(
-            f'Random results. Time taken: {-1 * optimized_random} seconds, '
-            f'({str(datetime.timedelta(seconds=int(-1 * optimized_random)))})')
-
-    elif return_type is SimulationReturnType.distance_travelled:
-        print(f'Distance travelled: {unoptimized}')
-        print(f'Optimized results. Max traversable distance: {optimized}')
-        print(f'Random results. Max traversable distance: {optimized_random}')
-
-    print(f'Optimized Speeds array: {results}')
-    print(f'Random Speeds array: {results_random}')
-
-    return unoptimized
 
 
 def display_commands():
