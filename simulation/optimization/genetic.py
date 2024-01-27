@@ -495,7 +495,7 @@ class GeneticOptimization(BaseOptimization):
 
         self.ga_instance.plot_fitness(title=graph_title, save_dir=save_dir)
 
-    def write_results(self):
+    def write_results(self, distance_travelled: float):
         """
 
         Write the hyperparameters of the current configuration, along with the resultant fitness
@@ -515,6 +515,7 @@ class GeneticOptimization(BaseOptimization):
             output = self.settings.as_list()
             output.insert(0, str(sequence_index))
             output.append(str(self.did_finish_race))
+            output.append(str(distance_travelled))
             writer.writerow(output)
 
     @staticmethod

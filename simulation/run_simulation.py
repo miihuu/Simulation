@@ -271,7 +271,9 @@ def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds)
                     geneticOptimization = GeneticOptimization(simulation_model, bounds, settings=settings, pbar=pbar,
                                                               plot_fitness=True)
                     geneticOptimization.maximize()
-                    geneticOptimization.write_results()
+                    distanced_travelled, _ = simulation_model.run_model(geneticOptimization.bestinput)
+                    geneticOptimization.write_results(distanced_travelled)
+
         except KeyboardInterrupt:
             print(f"Finished {stop_index - 1} setting(s), stopped while evaluating setting {stop_index}.")
             exit()
