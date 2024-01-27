@@ -7,8 +7,8 @@
   "max_current_capacity": 48.9,
   "max_energy_capacity": 4723.74,
 
-  "lvs_voltage": 12,
-  "lvs_current": 2.25,
+  "lvs_voltage": 13.6,
+  "lvs_current": 4.02708,
 
   "vehicle_mass": 250,
   "road_friction": 0.0055,
