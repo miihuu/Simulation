@@ -90,25 +90,15 @@ def run_simulation(settings):
 
     simulation_model = simulation_builder.get()
 
-    # Initialize a "guess" speed array
-    driving_hours = simulation_model.get_driving_time_divisions()
-    input_speed = np.array([30] * driving_hours)
-
-    # Run simulation model with the "guess" speed array
-    unoptimized_time = simulation_model.run_model(speed=input_speed, plot_results=True,
-                                                  verbose=settings.verbose,
-                                                  route_visualization=settings.route_visualization)
-
     # Set up optimization models
     maximum_speed = 80
     minimum_speed = 0
+    driving_hours = simulation_model.get_driving_time_divisions()
 
     bounds = InputBounds()
     bounds.add_bounds(driving_hours, minimum_speed, maximum_speed)
 
     run_hyperparameter_search(simulation_model, bounds)
-
-    return unoptimized_time
 
 
 def display_commands():
