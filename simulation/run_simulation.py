@@ -254,7 +254,7 @@ def run_unoptimized_and_export(input_speed=None, values=None, race_type="ASC", g
 
 
 def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds):
-    evals_per_setting: int = 3
+    evals_per_setting: int = 1
     settings_file = results_directory / "settings.csv"
     stop_index = 0
 
@@ -271,7 +271,7 @@ def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds)
                     geneticOptimization = GeneticOptimization(simulation_model, bounds, settings=settings, pbar=pbar,
                                                               plot_fitness=True)
                     geneticOptimization.maximize()
-                    distanced_travelled, _ = simulation_model.run_model(geneticOptimization.bestinput)
+                    distanced_travelled, _ = simulation_model.run_model(geneticOptimization.bestinput, plot_results=False)
                     geneticOptimization.write_results(distanced_travelled)
 
         except KeyboardInterrupt:

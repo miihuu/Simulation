@@ -510,6 +510,12 @@ class GeneticOptimization(BaseOptimization):
         """
 
         results_file = results_directory / "results.csv"
+        with open(results_file, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                print(row)
+
+        output = None
         with open(results_file, 'a') as f:
             writer = csv.writer(f)
             sequence_index: int = GeneticOptimization.get_sequence_index()
@@ -517,7 +523,27 @@ class GeneticOptimization(BaseOptimization):
             output.insert(0, str(sequence_index))
             output.append(str(self.did_finish_race))
             output.append(str(distance_travelled))
+            print(f"Writing: {output}")
             writer.writerow(output)
+        try:
+            with open("/results/result.txt", 'x') as f:
+                f.write(str(output))
+            print("/results/result.txt")
+        except Exception:
+            pass
+        try:
+            with open("Simulation/results/result.txt", 'x') as f:
+                f.write(str(output))
+            print("Simulation/results/result.txt")
+        except Exception:
+            pass
+        try:
+            with open("/Simulation/results/result.txt", 'x') as f:
+                f.write(str(output))
+                # docker run -it -v res8:/Simulation/results/ simulation:1.10
+            print("/Simulation/results/result.txt")
+        except Exception:
+            pass
 
     @staticmethod
     def parse_csv_into_settings(csv_reader: csv.reader) -> list[OptimizationSettings]:
