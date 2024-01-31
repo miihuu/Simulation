@@ -1,0 +1,2 @@
+Chromosomes,Parent_Selection,Generations,Parents,Crossover,Elitism,Mutation Type,Mutation Percent,Max Mutation
+7,6,sss,1,3,5,single_point,2,random,25.0,0.1,saturate_15,0.9470080160592068,True,2335.321767602004
