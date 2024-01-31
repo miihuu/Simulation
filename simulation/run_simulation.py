@@ -1,18 +1,14 @@
 import numpy as np
 import subprocess
-import datetime
 import json
 import sys
 import csv
 
 from simulation.main import Simulation, SimulationReturnType
-from simulation.optimization.bayesian import BayesianOptimization
-from simulation.optimization.random_opt import RandomOptimization
 from simulation.utils.InputBounds import InputBounds
 from simulation.config import config_directory
 from simulation.utils.SimulationBuilder import SimulationBuilder
-from simulation.optimization.genetic import GeneticOptimization, OptimizationSettings
-from simulation.data.results import results_directory
+from simulation.optimization.genetic import GeneticOptimization
 from tqdm import tqdm
 
 """
@@ -253,14 +249,24 @@ def run_unoptimized_and_export(input_speed=None, values=None, race_type="ASC", g
     return results_array
 
 
-def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds):
+def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds, results_directory: str = "/Simulation/results/"):
     evals_per_setting: int = 1
-    settings_file = results_directory / "settings.csv"
+    settings_file: str = results_directory + "settings.csv"
+    results_file: str = results_directory + "results.csv"
+
     stop_index = 0
 
     with open(settings_file, 'r') as f:
         csv_reader = csv.reader(f, delimiter=',')
         settings_list = GeneticOptimization.parse_csv_into_settings(csv_reader)
+
+    try:
+        with open(results_file, 'x') as f:
+            writer = csv.writer(f)
+            writer.writerow(["Chromosomes", "Parent_Selection", "Generations", "Parents", "Crossover",
+                             "Elitism", "Mutation Type", "Mutation Percent", "Max Mutation"])
+    except FileExistsError:
+        pass
 
     total_num = GeneticOptimization.get_total_generations(settings_list) * evals_per_setting
     with tqdm(total=total_num, file=sys.stdout, desc="Running hyperparameter search", position=0, leave=True) as pbar:
@@ -271,8 +277,9 @@ def run_hyperparameter_search(simulation_model: Simulation, bounds: InputBounds)
                     geneticOptimization = GeneticOptimization(simulation_model, bounds, settings=settings, pbar=pbar,
                                                               plot_fitness=True)
                     geneticOptimization.maximize()
-                    distanced_travelled, _ = simulation_model.run_model(geneticOptimization.bestinput, plot_results=False)
-                    geneticOptimization.write_results(distanced_travelled)
+                    best_input: np.ndarray = geneticOptimization.output(results_directory)
+                    distanced_travelled, _ = simulation_model.run_model(best_input, plot_results=False)
+                    geneticOptimization.write_results(distanced_travelled, results_directory=results_directory)
 
         except KeyboardInterrupt:
             print(f"Finished {stop_index - 1} setting(s), stopped while evaluating setting {stop_index}.")
